@@ -24,6 +24,10 @@ import android.widget.Toast
 /**
  * Fullscreen WebView shell for Inward Journey on Android TV.
  *
+ * Crash-proof startup: the status view is shown first, and every later
+ * step runs inside try/catch. If the WebView (or anything else) fails,
+ * the TV shows the actual error instead of dying silently.
+ *
  * Set DIAG_MODE = true to run the on-device capability check
  * (assets/diag.html) instead of the game.
  */
@@ -42,17 +46,52 @@ class MainActivity : Activity() {
     }
 
     private lateinit var webView: WebView
+    private lateinit var statusView: TextView
     private lateinit var errorView: TextView
 
-    @Suppress("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        makeFullscreen()
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         val root = FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)
+        }
+        statusView = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            textSize = 22f
+            gravity = Gravity.CENTER
+            setPadding(64, 64, 64, 64)
+            text = "Starting Inward Journey…"
+        }
+        root.addView(
+            statusView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+        // Status is on screen BEFORE anything that can throw.
+        setContentView(root)
+
+        try {
+            makeFullscreen()
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            val pkg = WebView.getCurrentWebViewPackage()
+            statusView.text =
+                "Starting Inward Journey…\nWebView: ${pkg?.packageName ?: "?"} ${pkg?.versionName ?: "?"}"
+            initWebView(root)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Startup failed", t)
+            statusView.text =
+                "The viewer couldn't start on this TV.\n\n${t.javaClass.name}\n${t.message}" +
+                    "\n\nTry updating Android System WebView from the Play Store, then reopen."
+        }
+    }
+
+    @Suppress("SetJavaScriptEnabled")
+    private fun initWebView(root: FrameLayout) {
+        if (BuildConfig.DEBUG) {
+            // Inspect from a PC via chrome://inspect while USB/adb connected.
+            WebView.setWebContentsDebuggingEnabled(true)
         }
 
         errorView = TextView(this).apply {
@@ -70,7 +109,8 @@ class MainActivity : Activity() {
             )
         }
 
-        root.addView(webView)
+        // WebView covers the status view; error overlay sits on top of both.
+        root.addView(webView, 1)
         root.addView(
             errorView,
             FrameLayout.LayoutParams(
@@ -78,12 +118,6 @@ class MainActivity : Activity() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
         )
-        setContentView(root)
-
-        if (BuildConfig.DEBUG) {
-            // Inspect from a PC via chrome://inspect while USB/adb connected.
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
 
         webView.addJavascriptInterface(TvBridge(), "TvBridge")
         webView.webViewClient = object : WebViewClient() {
@@ -141,7 +175,7 @@ class MainActivity : Activity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         // BACK steps through WebView history; exits only at the root page.
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && ::webView.isInitialized && webView.canGoBack()) {
             webView.goBack()
             return true
         }
@@ -150,17 +184,17 @@ class MainActivity : Activity() {
     }
 
     override fun onPause() {
-        webView.onPause()
+        if (::webView.isInitialized) webView.onPause()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
+        if (::webView.isInitialized) webView.onResume()
     }
 
     override fun onDestroy() {
-        webView.destroy()
+        if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
 
