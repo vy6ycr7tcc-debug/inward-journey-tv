@@ -7,7 +7,7 @@ Instead it downloads the latest build on demand, stores it on the TV, and plays
 it locally in a fullscreen WebView.
 
 - Package: `app.inwardjourney.tv`
-- `versionCode 5`, `versionName "2.2"` (installs as an upgrade over the previous app)
+- `versionCode 6`, `versionName "2.3"` (installs as an upgrade over the previous app)
 - `minSdk 28`, `compileSdk 34`, `targetSdk 34`, Java 17
 - **Zero external dependencies** — platform APIs only (no AndroidX)
 

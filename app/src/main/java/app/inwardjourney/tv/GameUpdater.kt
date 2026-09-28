@@ -120,9 +120,10 @@ class GameUpdater(private val context: Context) {
             // Cap the render resolution on the on-TV copy before it goes live.
             patchForTv(newDir)
 
-            gameDir.deleteRecursively()
             // Stage the old copy aside first: if the final rename fails we can
             // restore it instead of leaving the player with nothing to load.
+            // (Never delete the live dir first — that would make hadOld
+            // always false and defeat the rollback.)
             val oldDir = File(context.filesDir, "game_old")
             oldDir.deleteRecursively()
             val hadOld = gameDir.exists()
