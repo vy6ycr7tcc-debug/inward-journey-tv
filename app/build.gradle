@@ -1,47 +1,41 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-    namespace = "app.inwardjourney.tv"
-    compileSdk = 34
+    namespace 'app.inwardjourney.tv'
+    compileSdk 34
 
     defaultConfig {
-        applicationId = "app.inwardjourney.tv"
-        minSdk = 28
-        targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
-    }
-
-    buildFeatures {
-        buildConfig = true
+        applicationId "app.inwardjourney.tv"
+        minSdk 28
+        targetSdk 34
+        versionCode 5
+        versionName "2.2"
     }
 
     buildTypes {
-        debug {
-            // WebView remote debugging is enabled for debug builds
-            // (inspect via chrome://inspect on a PC).
-        }
         release {
-            minifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            minifyEnabled false
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
+
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        // BuildConfig.DEBUG is used to gate chrome://inspect in debug builds.
+        buildConfig true
     }
 }
 
-// Zero external dependencies: platform Activity + WebView only.
+// Zero external dependencies: platform APIs only.
 dependencies {
 }
