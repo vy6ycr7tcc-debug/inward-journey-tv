@@ -18,8 +18,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # GitHub-hosted runners already ship the Android SDK (ANDROID_SDK_ROOT);
+      # no setup step needed.
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
