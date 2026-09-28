@@ -277,9 +277,14 @@ class LauncherActivity : Activity() {
             else -> "Content: not downloaded"
         }
         versionView.text = "App v${BuildConfig.VERSION_NAME}"
-        if (ready && !busy) {
-            // Start D-pad focus on Play so the remote just works.
-            playButton.requestFocus()
+        if (!busy) {
+            if (ready) {
+                // Start D-pad focus on Play so the remote just works.
+                playButton.requestFocus()
+            } else {
+                // Focus the update button when there's no content yet.
+                updateButton.requestFocus()
+            }
         }
     }
 
