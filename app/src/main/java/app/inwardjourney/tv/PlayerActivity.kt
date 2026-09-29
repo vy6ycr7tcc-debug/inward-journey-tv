@@ -56,11 +56,6 @@ class PlayerActivity : Activity() {
     private lateinit var errorView: TextView
     private lateinit var updater: GameUpdater
 
-    // DIAG-OVERLAY — remove before release
-    private lateinit var diagOverlay: TextView
-    private var lastKeyCode: Int = 0
-    private val backPressTimes = LongArray(3)
-
     private val uiHandler = Handler(Looper.getMainLooper())
     private var selectLongFired = false
     private val selectLongRunnable = Runnable {
@@ -136,16 +131,6 @@ class PlayerActivity : Activity() {
             isFocusableInTouchMode = true
         }
 
-        // DIAG-OVERLAY — remove before release
-        diagOverlay = TextView(this).apply {
-            setTextColor(Color.GREEN)
-            textSize = 14f
-            setBackgroundColor(Color.argb(180, 0, 0, 0))
-            setPadding(16, 16, 16, 16)
-            visibility = View.GONE
-            text = "Diag Ready"
-        }
-
         // WebView covers the status view; error overlay sits on top of both.
         root.addView(webView, 1)
         root.addView(
@@ -154,17 +139,6 @@ class PlayerActivity : Activity() {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
-        )
-        root.addView(
-            diagOverlay,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.BOTTOM or Gravity.END
-                bottomMargin = 32
-                marginEnd = 32
-            }
         )
         // The remote's keys must reach the page: keep the WebView focused.
         webView.requestFocus()
@@ -353,18 +327,7 @@ class PlayerActivity : Activity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
-            lastKeyCode = event.keyCode
-            val diagText = "key: $lastKeyCode"
-            Log.d("InwardJourneyTv", diagText)
-            if (::diagOverlay.isInitialized && diagOverlay.visibility == View.VISIBLE) {
-                val currentText = diagOverlay.text.toString()
-                val parts = currentText.split(" | el: ")
-                if (parts.size == 2) {
-                    diagOverlay.text = "key: $lastKeyCode | el: ${parts[1]}"
-                } else {
-                    diagOverlay.text = diagText
-                }
-            }
+            Log.d("InwardJourneyTv", "key: ${event.keyCode}")
         }
         return super.dispatchKeyEvent(event)
     }
@@ -380,15 +343,6 @@ class PlayerActivity : Activity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            val now = SystemClock.uptimeMillis()
-            backPressTimes[0] = backPressTimes[1]
-            backPressTimes[1] = backPressTimes[2]
-            backPressTimes[2] = now
-            if (backPressTimes[2] - backPressTimes[0] < 1500) {
-                diagOverlay.visibility = if (diagOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                backPressTimes.fill(0)
-                return true
-            }
             // BACK steps through WebView history; exits only at the root page.
             if (::webView.isInitialized && webView.canGoBack()) {
                 webView.goBack()
@@ -484,11 +438,7 @@ class PlayerActivity : Activity() {
                 sendKeyToPage(KeyEvent.KEYCODE_SPACE, KeyEvent.ACTION_UP)
             }
 
-            val diagText = "key: $lastKeyCode | el: $activeDesc"
-            Log.d("InwardJourneyTv", diagText)
-            if (::diagOverlay.isInitialized) {
-                diagOverlay.text = diagText
-            }
+            Log.d("InwardJourneyTv", "el: $activeDesc")
         }
     }
 
