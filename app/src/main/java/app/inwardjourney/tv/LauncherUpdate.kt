@@ -1,7 +1,9 @@
 package app.inwardjourney.tv
 
+import android.util.JsonReader
+import android.util.JsonToken
 import android.util.Log
-import org.json.JSONObject
+import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -28,14 +30,38 @@ object LauncherUpdate {
             connectTimeout = 8000
             readTimeout = 8000
         }
-        val body = conn.inputStream.bufferedReader().readText()
-        conn.disconnect()
-        val j = JSONObject(body)
-        val info = Info(
-            j.getInt("versionCode"),
-            j.optString("versionName", "?"),
-            j.getString("apkUrl")
-        )
+        var versionCode = 0
+        var versionName = "?"
+        var apkUrl = ""
+        try {
+            JsonReader(InputStreamReader(conn.inputStream, "UTF-8")).use { reader ->
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "versionCode" -> versionCode = reader.nextInt()
+                        "versionName" -> {
+                            if (reader.peek() == JsonToken.NULL) {
+                                reader.nextNull()
+                            } else {
+                                versionName = reader.nextString()
+                            }
+                        }
+                        "apkUrl" -> {
+                            if (reader.peek() == JsonToken.NULL) {
+                                reader.nextNull()
+                            } else {
+                                apkUrl = reader.nextString()
+                            }
+                        }
+                        else -> reader.skipValue()
+                    }
+                }
+                reader.endObject()
+            }
+        } finally {
+            conn.disconnect()
+        }
+        val info = Info(versionCode, versionName, apkUrl)
         if (info.versionCode > BuildConfig.VERSION_CODE && info.apkUrl.startsWith("https://")) info
         else null
     } catch (t: Throwable) {
