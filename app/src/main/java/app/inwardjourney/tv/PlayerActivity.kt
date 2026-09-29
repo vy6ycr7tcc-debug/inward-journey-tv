@@ -429,6 +429,7 @@ class PlayerActivity : Activity() {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) return true
         if (::webView.isInitialized && event != null) {
             if (isSelectKey(keyCode)) {
                 uiHandler.removeCallbacks(selectLongRunnable)
