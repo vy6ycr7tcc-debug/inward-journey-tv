@@ -25,8 +25,8 @@ object LauncherUpdate {
 
     data class Info(val versionCode: Int, val versionName: String, val apkUrl: String)
 
-    fun check(): Info? = try {
-        val conn = (URL(VERSION_URL).openConnection() as HttpURLConnection).apply {
+    fun check(versionUrl: String = VERSION_URL): Info? = try {
+        val conn = (URL(versionUrl).openConnection() as HttpURLConnection).apply {
             connectTimeout = 8000
             readTimeout = 8000
         }
