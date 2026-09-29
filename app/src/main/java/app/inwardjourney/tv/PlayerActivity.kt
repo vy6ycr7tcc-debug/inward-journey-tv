@@ -285,7 +285,7 @@ class PlayerActivity : Activity() {
             val raf = java.io.RandomAccessFile(file, "r")
             raf.seek(start)
             val length = end - start + 1
-            val stream = object : java.io.InputStream() {
+            val rawStream = object : java.io.InputStream() {
                 var remaining = length
                 override fun read(): Int {
                     if (remaining <= 0) return -1
@@ -305,6 +305,7 @@ class PlayerActivity : Activity() {
                     raf.close()
                 }
             }
+            val bufferedStream = java.io.BufferedInputStream(rawStream)
             WebResourceResponse(
                 mime, encoding, 206, "Partial Content",
                 mapOf(
@@ -312,7 +313,7 @@ class PlayerActivity : Activity() {
                     "Accept-Ranges" to "bytes",
                     "Content-Length" to length.toString()
                 ),
-                stream
+                bufferedStream
             )
         } catch (t: Throwable) {
             Log.w(TAG, "range request failed", t)
