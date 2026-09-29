@@ -229,7 +229,12 @@ class PlayerActivity : Activity() {
             allowFileAccess = true
         }
 
-        webView.loadUrl(GAME_URL)
+        val urlToLoad = if (GAME_URL.contains("?")) {
+            "$GAME_URL&tv=1"
+        } else {
+            "$GAME_URL?tv=1"
+        }
+        webView.loadUrl(urlToLoad)
     }
 
     private fun mimeType(name: String): Pair<String, String?> {
