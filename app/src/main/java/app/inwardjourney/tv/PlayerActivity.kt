@@ -270,21 +270,20 @@ class PlayerActivity : Activity() {
         rangeHeader: String
     ): WebResourceResponse? {
         return try {
-            val m = Regex("bytes=(\\d*)-(\\d*)").find(rangeHeader) ?: return null
             val size = file.length()
-            if (size <= 0) return null
-            var start = m.groupValues[1].toLongOrNull() ?: 0L
-            var end = m.groupValues[2].toLongOrNull() ?: (size - 1)
-            if (end >= size) end = size - 1
-            if (start > end || start >= size) {
+            val range = parseByteRange(rangeHeader, size) ?: return null
+            if (range is ByteRangeResult.Unsatisfiable) {
                 return WebResourceResponse(
                     "text/plain", "UTF-8", 416, "Range Not Satisfiable",
                     mapOf("Content-Range" to "bytes */$size"), null
                 )
             }
+            val valid = range as ByteRangeResult.Valid
+            val start = valid.start
+            val end = valid.end
+            val length = valid.length
             val raf = java.io.RandomAccessFile(file, "r")
             raf.seek(start)
-            val length = end - start + 1
             val stream = object : java.io.InputStream() {
                 var remaining = length
                 override fun read(): Int {
@@ -510,4 +509,23 @@ class PlayerActivity : Activity() {
         if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
+}
+
+internal sealed class ByteRangeResult {
+    data class Valid(val start: Long, val end: Long) : ByteRangeResult() {
+        val length: Long get() = end - start + 1
+    }
+    object Unsatisfiable : ByteRangeResult()
+}
+
+internal fun parseByteRange(rangeHeader: String, size: Long): ByteRangeResult? {
+    if (size <= 0) return null
+    val m = Regex("bytes=(\\d*)-(\\d*)").find(rangeHeader) ?: return null
+    var start = m.groupValues[1].toLongOrNull() ?: 0L
+    var end = m.groupValues[2].toLongOrNull() ?: (size - 1)
+    if (end >= size) end = size - 1
+    if (start > end || start >= size) {
+        return ByteRangeResult.Unsatisfiable
+    }
+    return ByteRangeResult.Valid(start, end)
 }
