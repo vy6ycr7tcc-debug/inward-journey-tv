@@ -231,12 +231,31 @@ class GameUpdater(private val context: Context) {
      * the game ever ships its own TV mode, this becomes redundant but
      * harmless. Idempotent (marker comment); non-fatal on failure.
      */
+    private fun isPatched(index: File): Boolean {
+        index.bufferedReader().use { reader ->
+            val buf = CharArray(8192)
+            var overlap = ""
+            var read = reader.read(buf)
+            while (read > 0) {
+                val chunk = overlap + String(buf, 0, read)
+                if (chunk.contains(TV_PATCH_MARKER)) return true
+                overlap = if (chunk.length >= TV_PATCH_MARKER.length) {
+                    chunk.substring(chunk.length - (TV_PATCH_MARKER.length - 1))
+                } else {
+                    chunk
+                }
+                read = reader.read(buf)
+            }
+        }
+        return false
+    }
+
     private fun patchForTv(dir: File) {
         val index = File(dir, "index.html")
         if (!index.isFile) return
         try {
+            if (isPatched(index)) return
             var html = index.readText()
-            if (html.contains(TV_PATCH_MARKER)) return
             val headOpen = html.indexOf("<head")
             if (headOpen < 0) return
             val headEnd = html.indexOf('>', headOpen)
