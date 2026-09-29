@@ -1,10 +1,5 @@
 # Built application files
 *.apk
-*.idsig
-dist/
-manual-build/out/
-manual-build/test-stubs/
-manual-build/app/
 # ...except the release APKs we distribute from this repo:
 !apk/*.apk
 *.aar

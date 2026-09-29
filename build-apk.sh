@@ -19,10 +19,11 @@ set -e
 cd "$(dirname "$0")"
 
 export PATH="$HOME/jdk/bin:$PATH"
-SDK="/opt/android-sdk"
+SDK="$HOME/android-sdk"
 BT="$SDK/build-tools/34.0.0"
-KCP="$(echo /usr/share/gradle-8.8/lib/*.jar | tr ' ' ':')"
-STDLIB="/usr/share/gradle-8.8/lib/kotlin-stdlib-1.9.22.jar"
+KOTLINC="$HOME/kotlinc/bin/kotlinc"
+# kotlinc dist layout: ~/kotlin/kotlinc/
+if [ ! -x "$KOTLINC" ]; then KOTLINC="$HOME/kotlin/kotlinc/bin/kotlinc"; fi
 
 WORK="$(pwd)/manual-build"
 OUT="$WORK/out"
@@ -52,13 +53,13 @@ public final class BuildConfig {
 EOF
 
 echo "== 1. kotlinc =="
-java -cp "$KCP" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler \
+"$KOTLINC" \
   app/src/main/java/app/inwardjourney/tv/LauncherActivity.kt \
   app/src/main/java/app/inwardjourney/tv/PlayerActivity.kt \
   app/src/main/java/app/inwardjourney/tv/GameUpdater.kt \
   app/src/main/java/app/inwardjourney/tv/LauncherUpdate.kt \
   "$WORK/app/inwardjourney/tv/BuildConfig.java" \
-  -classpath "$SDK/platforms/android-34/android.jar:$STDLIB" \
+  -classpath "$SDK/platforms/android-34/android.jar:$HOME/kotlin/kotlinc/lib/kotlin-stdlib.jar" \
   -d "$OUT/classes" -jvm-target 17 -no-stdlib
 
 echo "== 2. aapt2 compile =="
@@ -76,7 +77,7 @@ echo "== 4. d8 =="
 "$BT/d8" --lib "$SDK/platforms/android-34/android.jar" \
   --min-api 28 --output "$OUT/dex" \
   $(find "$OUT/classes" -name "*.class") \
-  "$STDLIB"
+  "$HOME/kotlin/kotlinc/lib/kotlin-stdlib.jar"
 
 echo "== 5. add classes.dex (stored, uncompressed) =="
 cp "$OUT/base.apk" "$OUT/unaligned.apk"
