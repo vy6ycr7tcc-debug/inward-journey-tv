@@ -223,7 +223,7 @@ class PlayerActivity : Activity() {
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_DEFAULT
-            allowFileAccess = true
+            allowFileAccess = false
         }
 
         webView.loadUrl(GAME_URL)
