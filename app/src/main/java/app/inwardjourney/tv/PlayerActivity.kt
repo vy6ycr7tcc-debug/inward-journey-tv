@@ -49,6 +49,8 @@ class PlayerActivity : Activity() {
 
         /** Holding SELECT this long sends F (fly) instead of Space (action). */
         private const val SELECT_LONG_PRESS_MS = 450L
+
+        private val RANGE_HEADER_REGEX = Regex("bytes=(\\d*)-(\\d*)")
     }
 
     private lateinit var webView: WebView
@@ -270,7 +272,7 @@ class PlayerActivity : Activity() {
         rangeHeader: String
     ): WebResourceResponse? {
         return try {
-            val m = Regex("bytes=(\\d*)-(\\d*)").find(rangeHeader) ?: return null
+            val m = RANGE_HEADER_REGEX.find(rangeHeader) ?: return null
             val size = file.length()
             if (size <= 0) return null
             var start = m.groupValues[1].toLongOrNull() ?: 0L
