@@ -384,8 +384,12 @@ class LauncherActivity : Activity() {
                         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
                         when (status) {
                             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                                val confirm: Intent? =
+                                val confirm: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+                                } else {
+                                    @Suppress("DEPRECATION")
                                     intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                                }
                                 confirm?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 if (confirm != null) startActivity(confirm)
                             }
@@ -404,8 +408,12 @@ class LauncherActivity : Activity() {
                         }
                     }
                 }
-                @Suppress("UnspecifiedRegisterReceiverFlag")
-                registerReceiver(receiver, IntentFilter(action))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    registerReceiver(receiver, IntentFilter(action), Context.RECEIVER_NOT_EXPORTED)
+                } else {
+                    @Suppress("UnspecifiedRegisterReceiverFlag")
+                    registerReceiver(receiver, IntentFilter(action))
+                }
                 val flags = PendingIntent.FLAG_UPDATE_CURRENT or
                     (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
                 val pi = PendingIntent.getBroadcast(
