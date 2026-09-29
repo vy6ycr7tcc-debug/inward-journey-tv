@@ -11,8 +11,8 @@ android {
         applicationId "app.inwardjourney.tv"
         minSdk 28
         targetSdk 34
-        versionCode 9
-        versionName "2.6"
+        versionCode 10
+        versionName "2.7"
     }
 
     buildTypes {
