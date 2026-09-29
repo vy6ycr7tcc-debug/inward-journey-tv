@@ -3,6 +3,8 @@ package app.inwardjourney.tv
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.JsonReader
+import android.util.JsonToken
 import android.util.Log
 import java.io.File
 import java.io.IOException
@@ -54,8 +56,6 @@ class GameUpdater(private val context: Context) {
 
         private const val CONNECT_TIMEOUT_MS = 10_000
         private const val READ_TIMEOUT_MS = 60_000
-
-        private val SHA_RE = Regex("\"sha\"\\s*:\\s*\"([0-9a-f]+)\"")
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -151,8 +151,38 @@ class GameUpdater(private val context: Context) {
         }
         try {
             conn.inputStream.bufferedReader().use { r ->
-                return SHA_RE.find(r.readText())?.groupValues?.get(1)
+                JsonReader(r).use { reader ->
+                    val token = reader.peek()
+                    if (token == JsonToken.BEGIN_OBJECT) {
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            if (reader.nextName() == "sha") {
+                                return reader.nextString()
+                            } else {
+                                reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                    } else if (token == JsonToken.BEGIN_ARRAY) {
+                        reader.beginArray()
+                        while (reader.hasNext() && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                if (reader.nextName() == "sha") {
+                                    return reader.nextString()
+                                } else {
+                                    reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                        }
+                    }
+                }
             }
+            return null
+        } catch (t: Throwable) {
+            Log.w(TAG, "failed to parse version JSON", t)
+            return null
         } finally {
             conn.disconnect()
         }
