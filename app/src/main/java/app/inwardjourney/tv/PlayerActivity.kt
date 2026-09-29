@@ -64,6 +64,7 @@ class PlayerActivity : Activity() {
     private val backPressTimes = LongArray(3)
 
     private val uiHandler = Handler(Looper.getMainLooper())
+    private val exitRunnable = Runnable { finish() }
     private var selectLongFired = false
     private val selectLongRunnable = Runnable {
         selectLongFired = true
@@ -390,13 +391,17 @@ class PlayerActivity : Activity() {
             if (backPressTimes[2] - backPressTimes[0] < 1500) {
                 diagOverlay.visibility = if (diagOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                 backPressTimes.fill(0)
+                uiHandler.removeCallbacks(exitRunnable)
                 return true
             }
             // BACK steps through WebView history; exits only at the root page.
             if (::webView.isInitialized && webView.canGoBack()) {
                 webView.goBack()
-                return true
+            } else {
+                uiHandler.removeCallbacks(exitRunnable)
+                uiHandler.postDelayed(exitRunnable, 1600)
             }
+            return true
         }
         if (::webView.isInitialized && event != null) {
             if (isSelectKey(keyCode)) {

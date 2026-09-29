@@ -39,7 +39,8 @@ class GameUpdater(private val context: Context) {
 
     companion object {
         private const val TAG = "InwardJourneyTv"
-        private const val TV_PATCH_MARKER = "ij-tv-patch-v2"
+        private const val TV_PATCH_MARKER = "ij-tv-patch-v3"
+        private const val OLD_TV_PATCH_MARKER = "ij-tv-patch-v2"
 
         // ------------------------------------------------------------------
         // CONTENT SOURCE — repoint this one constant to change where the app
@@ -256,17 +257,102 @@ class GameUpdater(private val context: Context) {
         try {
             if (isPatched(index)) return
             var html = index.readText()
+
+            // Strip old v2 patch if present
+            val oldMarkerIdx = html.indexOf("<!-- $OLD_TV_PATCH_MARKER -->")
+            if (oldMarkerIdx >= 0) {
+                val scriptEndIdx = html.indexOf("</script>", oldMarkerIdx)
+                if (scriptEndIdx >= 0) {
+                    html = html.substring(0, oldMarkerIdx) + html.substring(scriptEndIdx + 9)
+                }
+            }
+
             val headOpen = html.indexOf("<head")
             if (headOpen < 0) return
             val headEnd = html.indexOf('>', headOpen)
             if (headEnd < 0) return
-            val patch = "<!-- $TV_PATCH_MARKER --><script>" +
-                "try{Object.defineProperty(window,'devicePixelRatio'," +
-                "{get:function(){return 0.5},configurable:true});}catch(e){}" +
-                "(function(){var n=0;function go(){try{var ij=window.__ij;" +
-                "if(ij&&ij.quality){ij.quality.set(3);" +
-                "ij.quality.window=function(){};return;}}catch(e){}" +
-                "if(++n<120)setTimeout(go,500);}go();})();" +
+            val patch = "<!-- $TV_PATCH_MARKER --><style>" +
+                "#map { font-size: 24px !important; }" +
+                "#map-canvas { max-height: 50vh !important; }" +
+                "#map-places button { font-size: 24px !important; padding: 16px !important; }" +
+                "#map-zoom button { font-size: 24px !important; padding: 16px !important; }" +
+                "</style><script>" +
+                "document.addEventListener('focus', function(e) {" +
+                "  if(e.target && e.target.closest && e.target.closest('#map-places, #map-zoom, #map-continue, #map-guide, #map-close')) {" +
+                "    e.target.scrollIntoView({block:'nearest'});" +
+                "  }" +
+                "}, true);" +
+                "(function(){" +
+                "  var dprSteps = [1.0, 0.85, 0.7];" +
+                "  var step = 0;" +
+                "  var dprVal = dprSteps[step];" +
+                "  try {" +
+                "    Object.defineProperty(window, 'devicePixelRatio', {" +
+                "      get: function() { return dprVal; }," +
+                "      configurable: true" +
+                "    });" +
+                "  } catch(e) {}" +
+                "  var lastTime = performance.now();" +
+                "  var frames = 0;" +
+                "  var lowWindows = 0;" +
+                "  var lastChange = 0;" +
+                "  var highTime = 0;" +
+                "  function tick() {" +
+                "    requestAnimationFrame(tick);" +
+                "    frames++;" +
+                "    var now = performance.now();" +
+                "    if (now - lastTime >= 3000) {" +
+                "      var fps = frames / ((now - lastTime) / 1000);" +
+                "      if (fps < 28) {" +
+                "        lowWindows++;" +
+                "        highTime = 0;" +
+                "        if (lowWindows >= 2 && now - lastChange >= 5000) {" +
+                "          if (step < dprSteps.length - 1) {" +
+                "            step++;" +
+                "            dprVal = dprSteps[step];" +
+                "            lastChange = now;" +
+                "          } else {" +
+                "            try {" +
+                "              var ij = window.__ij;" +
+                "              if (ij && ij.quality && ij.quality.set) {" +
+                "                ij.quality.set(3);" +
+                "                ij.quality.window = function(){};" +
+                "              }" +
+                "            } catch(e) {}" +
+                "            lastChange = now;" +
+                "          }" +
+                "          lowWindows = 0;" +
+                "        }" +
+                "      } else {" +
+                "        lowWindows = 0;" +
+                "        if (fps > 50) {" +
+                "          if (highTime === 0) highTime = now;" +
+                "          if (now - highTime >= 30000 && now - lastChange >= 5000) {" +
+                "            if (step > 0) {" +
+                "              step--;" +
+                "              dprVal = dprSteps[step];" +
+                "              lastChange = now;" +
+                "              highTime = 0;" +
+                "            } else {" +
+                "              try {" +
+                "                var ij = window.__ij;" +
+                "                if (ij && ij.quality && ij.quality.set) {" +
+                "                  ij.quality.set(2);" +
+                "                  ij.quality.window = function(){};" +
+                "                }" +
+                "              } catch(e) {}" +
+                "            }" +
+                "          }" +
+                "        } else {" +
+                "          highTime = 0;" +
+                "        }" +
+                "      }" +
+                "      frames = 0;" +
+                "      lastTime = now;" +
+                "    }" +
+                "  }" +
+                "  requestAnimationFrame(tick);" +
+                "})();" +
                 "</script>"
             html = html.substring(0, headEnd + 1) + patch + html.substring(headEnd + 1)
             index.writeText(html)
