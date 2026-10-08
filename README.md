@@ -162,6 +162,12 @@ Requirements: JDK 17+, Android SDK with `platforms;android-34` and
 
 Install over adb: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
+Regenerating the banner/icon (drawn programmatically — no designer assets):
+
+```bash
+java tooling/GenArt.java app/src/main/res
+```
+
 ## Signing note (important)
 
 Debug builds are signed with a debug key. If the APK is signed with a
