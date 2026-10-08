@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "updated": "2026-10-07",
+  "channels": [
+    {
+      "id": "demo",
+      "title": "Demo",
+      "description": "Sample video proving the playback pipeline. Replace with real R2 channels.",
+      "cardImage": "",
+      "videos": [
+        {
+          "id": "demo-01",
+          "title": "Sample video",
+          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          "durationSec": 15
+        }
+      ]
+    }
+  ],
+  "screensaver": {
+    "channelId": "demo",
+    "shuffle": true
+  }
+}

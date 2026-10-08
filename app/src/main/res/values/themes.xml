@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Leanback browse chrome: dark, minimal. -->
+    <style name="Theme.InwardJourney" parent="Theme.Leanback">
+        <item name="android:windowBackground">@color/deep_blue</item>
+        <item name="android:colorAccent">@color/gold</item>
+    </style>
+
+    <!-- Fullscreen, control-free player surface. -->
+    <style name="Theme.InwardJourney.Player" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:colorAccent">@color/gold</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+
+</resources>

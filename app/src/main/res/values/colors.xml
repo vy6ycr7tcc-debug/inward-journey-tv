@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App chrome: deep blue, gold, ember. The video content is the star. -->
+    <color name="deep_blue">#071426</color>
+    <color name="deep_blue_light">#0A2A4D</color>
+    <color name="gold">#D8B15A</color>
+    <color name="text_primary">#F2F5F8</color>
+    <color name="text_secondary">#9FB2C8</color>
+</resources>
