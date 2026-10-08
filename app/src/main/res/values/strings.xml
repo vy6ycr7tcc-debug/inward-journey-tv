@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Inward Journey</string>
+
+    <!-- Browse -->
+    <string name="browse_title">Inward Journey</string>
+    <string name="row_channels">Channels</string>
+
+    <!-- Catalog error screen -->
+    <string name="error_title">Can\'t load channels</string>
+    <string name="error_message">The channel list couldn\'t be loaded. Check the network connection and try again.</string>
+    <string name="action_retry">Retry</string>
+
+    <!-- Player -->
+    <string name="player_error_title">Playback error</string>
+    <string name="player_error_message">This video couldn\'t be loaded. Check the network connection and try again.</string>
+    <string name="state_paused">Paused</string>
+    <string name="channel_missing">This channel isn\'t available right now.</string>
+
+    <!-- Dream (screensaver) -->
+    <string name="dream_unavailable">Inward Journey\nNo ambient video available</string>
+
+    <!-- Update -->
+    <string name="update_title">Update available</string>
+    <string name="update_message">Version %1$s is ready to install.</string>
+    <string name="update_action">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_failed">Update download failed.</string>
+</resources>
