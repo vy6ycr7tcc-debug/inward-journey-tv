@@ -3,10 +3,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
 
-/** Generates the TV banner (320x180 + xhdpi 2x) and app icon (48 mdpi +
- * 192 xxxhdpi): deep-blue gradient, gold "Inward Journey", ember accents.
- * Drawing happens in a fixed design coordinate space; output images are the
- * design scaled via Graphics2D.scale, so text renders sharp at every size. */
+/** Generates the TV banner (320x180 + xhdpi 2x) and the adaptive-icon
+ * foreground layer (ring + monogram on transparency; the background gradient
+ * lives in drawable/ic_launcher_bg.xml). Design space is fixed — output
+ * images are the design scaled via Graphics2D.scale, so text stays sharp.
+ *
+ *  java tooling/GenArt.java app/src/main/res   */
 public class GenArt {
     static final Color DEEP = new Color(0x07, 0x14, 0x26);
     static final Color DEEP_LIGHT = new Color(0x0A, 0x2A, 0x4D);
@@ -16,16 +18,18 @@ public class GenArt {
     public static void main(String[] args) throws Exception {
         System.setProperty("java.awt.headless", "true");
         File res = new File(args.length > 0 ? args[0] : ".");
-        File mdpi = new File(res, "drawable-mdpi");
-        File xhdpi = new File(res, "drawable-xhdpi");
-        File xxxhdpi = new File(res, "drawable-xxxhdpi");
-        mdpi.mkdirs(); xhdpi.mkdirs(); xxxhdpi.mkdirs();
-
-        ImageIO.write(banner(1.0), "png", new File(mdpi, "tv_banner.png"));
-        ImageIO.write(banner(2.0), "png", new File(xhdpi, "tv_banner.png"));
-        ImageIO.write(icon(48 / 192.0), "png", new File(mdpi, "tv_icon.png"));
-        ImageIO.write(icon(1.0), "png", new File(xxxhdpi, "tv_icon.png"));
-        System.out.println("wrote banner+icon densities to " + res.getAbsolutePath());
+        // Every bitmap in every density bucket: crisp on any TV, and lint's
+        // density-completeness checks have nothing to complain about.
+        String[] densities = {"mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"};
+        double[] bannerScales = {1.0, 1.5, 2.0, 3.0, 4.0};
+        double[] iconScales = {48 / 192.0, 72 / 192.0, 96 / 192.0, 144 / 192.0, 1.0};
+        for (int i = 0; i < densities.length; i++) {
+            File dir = new File(res, "drawable-" + densities[i]);
+            dir.mkdirs();
+            ImageIO.write(banner(bannerScales[i]), "png", new File(dir, "tv_banner.png"));
+            ImageIO.write(iconForeground(iconScales[i]), "png", new File(dir, "ic_launcher_fg.png"));
+        }
+        System.out.println("wrote banner + icon foreground at 5 densities to " + res.getAbsolutePath());
     }
 
     static BufferedImage banner(double scale) {
@@ -63,16 +67,15 @@ public class GenArt {
         return img;
     }
 
-    static BufferedImage icon(double scale) {
+    /** Adaptive-icon foreground: gold ring + IJ + ember dot on transparency.
+     *  Design space 192x192; content stays inside the ~66% adaptive safe zone. */
+    static BufferedImage iconForeground(double scale) {
         int s = (int) (192 * scale);
         BufferedImage img = new BufferedImage(s, s, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.scale(scale, scale); // design space: 192x192
-
-        g.setPaint(new GradientPaint(0, 0, DEEP, 0, 192, DEEP_LIGHT));
-        g.fillRect(0, 0, 192, 192);
 
         g.setStroke(new BasicStroke(5f));
         g.setColor(GOLD);
